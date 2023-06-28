@@ -58,6 +58,3 @@ app.post('/', async (req: Request, res: Response) => {
 app.listen(process.env.PORT, () => {
 	console.log(`Application started on port ${process.env.PORT}!`);
 });
-
-// Export the Express API
-module.exports = app;
