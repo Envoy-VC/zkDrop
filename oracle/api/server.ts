@@ -17,6 +17,12 @@ const DevDaoContract = '0x25ed58c027921E14D86380eA2646E3a1B5C55A8b';
 
 const app = express();
 
+app.get('/', (req: Request, res: Response) => {
+	res.send({
+		message: 'Basic Oracle Mina Protocol',
+	});
+});
+
 app.post('/', async (req: Request, res: Response) => {
 	const address: string = req.body.address;
 	if (!address) res.status(400).send({ error: 'Address is required' });
@@ -52,3 +58,6 @@ app.post('/', async (req: Request, res: Response) => {
 app.listen(process.env.PORT, () => {
 	console.log(`Application started on port ${process.env.PORT}!`);
 });
+
+// Export the Express API
+module.exports = app;
