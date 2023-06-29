@@ -29,7 +29,7 @@ app.post('/', async (req: Request, res: Response) => {
 	if (!address) res.status(400).send({ error: 'Address is required' });
 
 	// Oracle Public and Private Key
-	const privateKey = PrivateKey.fromBase58(process.env.PRIVATE_KEY ?? '');
+	const privateKey = PrivateKey.fromBase58(process.env.PRIVATE_KEY);
 	const publicKey = privateKey.toPublicKey();
 
 	// Get CODE BALANCE
