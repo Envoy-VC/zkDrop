@@ -16,6 +16,7 @@ const codeAddress = '0xb24cd494faE4C180A89975F1328Eab2a7D5d8f11';
 const DevDaoContract = '0x25ed58c027921E14D86380eA2646E3a1B5C55A8b';
 
 const app = express();
+app.use(express.json());
 
 app.get('/', (req: Request, res: Response) => {
 	res.send({
