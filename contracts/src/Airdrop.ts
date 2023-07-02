@@ -22,8 +22,6 @@ import {
 const ORACLE_PUBLIC_KEY =
 	'B62qkyP8a2RfB5dZbdoRSWQqmbsdkTNWA8aDWNWt8ocndZhL7qqtgFD';
 
-let initialRoot = Field(0);
-
 export class Airdrop extends SmartContract {
 	@state(PublicKey) oraclePublicKey = State<PublicKey>();
 	@state(Field) mapRoot = State<Field>();
@@ -79,7 +77,7 @@ export class Airdrop extends SmartContract {
 
 		// Check if the user has either enough CODE Tokens or NFTs
 		const isEligible = hasEnoughCodeBalance.or(hasEnoughNFTs);
-		isEligible.assertEquals(Bool(true));
+		isEligible.assertEquals(Bool(true), 'Not Eligible for Airdrop');
 
 		// Get the Initial Root and and Check valueBefore
 		const initialRoot = this.mapRoot.get();
@@ -89,11 +87,11 @@ export class Airdrop extends SmartContract {
 
 		// Now Update the Root before sending MINA to prevent reentrancy attacks
 		const [rootBefore, key] = keyWitness.computeRootAndKey(valueBefore);
-		rootBefore.assertEquals(initialRoot);
+		rootBefore.assertEquals(initialRoot, 'Airdrop Already Claimed');
 
 		key.assertEquals(keyToChange);
 
-		const [rootAfter, _] = keyWitness.computeRootAndKey(valueBefore.add(1));
+		const [rootAfter, _] = keyWitness.computeRootAndKey(Field(1));
 		this.mapRoot.set(rootAfter);
 
 		// SEND MINA
@@ -106,7 +104,7 @@ export class Airdrop extends SmartContract {
  * 1) Setup initial environment and test accounts
  ******************************************************************************/
 const map = new MerkleMap();
-initialRoot = map.getRoot();
+let initialRoot = map.getRoot();
 
 let useProof = false;
 if (useProof) await Airdrop.compile();
@@ -116,9 +114,6 @@ Mina.setActiveInstance(Local);
 
 const { privateKey: deployerKey, publicKey: deployerAccount } =
 	Local.testAccounts[0];
-
-const { privateKey: senderKey, publicKey: senderAccount } =
-	Local.testAccounts[1];
 
 // Test Accounts
 let account1Key = PrivateKey.random();
@@ -147,9 +142,10 @@ tx = await Mina.transaction(deployerAccount, () => {
 });
 await tx.sign([deployerKey, zkAppPrivateKey]).send();
 
-console.log(`\n\nDeployed zkApp at ${zkAppAddress.toBase58()}`);
+console.log(`\nDeployed zkApp at ${zkAppAddress.toBase58()}`);
 console.log(
-	'\nBalance of Account 1: ' + Mina.getBalance(account1Address).toString()
+	'Balance of Account 1: ',
+	Number(Mina.getBalance(account1Address).toString()) / 10 ** 9
 );
 
 /*******************************************************************************
@@ -163,16 +159,20 @@ tx = await Mina.transaction(account1Address, () => {
 await tx.prove();
 await tx.sign([account1Key]).send();
 
-console.log('\nBalance of zkApp: ' + Mina.getBalance(zkAppAddress).toString());
 console.log(
-	'\nBalance of Account 1: ' + Mina.getBalance(account1Address).toString()
+	'\nBalance of zkApp: ',
+	Number(Mina.getBalance(zkAppAddress).toString()) / 10 ** 9
+);
+console.log(
+	'Balance of Account 1: ',
+	Number(Mina.getBalance(account1Address).toString()) / 10 ** 9
 );
 
 /*******************************************************************************
  * 3) Claim Airdrop
  ******************************************************************************/
 
-console.log('\n\n---------- Claiming Airdrop  ----------\n');
+console.log('\n---------- Claiming Airdrop  ----------');
 
 async function claimAirdrop(
 	pb: PublicKey,
@@ -188,14 +188,15 @@ async function claimAirdrop(
 			'Content-Type': 'application/json',
 		},
 	});
+
 	const { data, signature } = await res.json();
 	const pbToField = Field.fromFields(pb.toFields());
 	const witness = map.getWitness(pbToField);
 	const valueBefore = Field(0);
 
 	console.log(
-		'\nBalance of Account 1 before Airdrop: ' +
-			Mina.getBalance(account1Address).toString()
+		'\nBalance of Account before Airdrop: ',
+		Number(Mina.getBalance(pb).toString()) / 10 ** 9
 	);
 
 	tx = await Mina.transaction(pb, () => {
@@ -211,26 +212,19 @@ async function claimAirdrop(
 	await tx.prove();
 	await tx.sign([pk]).send();
 	console.log(
-		'Balance of Account 1 after Airdrop: ' +
-			Mina.getBalance(account1Address).toString()
+		'Balance of Account after Airdrop: ',
+		Number(Mina.getBalance(pb).toString()) / 10 ** 9
 	);
 	console.log(
-		'Balance of zkApp after Airdrop: ' +
-			Mina.getBalance(zkAppAddress).toString()
+		'Balance of zkApp after Airdrop: ',
+		Number(Mina.getBalance(zkAppAddress).toString()) / 10 ** 9
 	);
 }
 
-console.log('\n---------- Test 1 ----------\n');
-await claimAirdrop(
-	account1Address,
-	account1Key,
-	'0xBF4979305B43B0eB5Bb6a5C67ffB89408803d3e1'
-);
-
-console.log('\n\n---------- Test 2 ----------\n');
+console.log('\n---------- Test 3 ----------');
 
 await claimAirdrop(
-	account1Address,
-	account1Key,
-	'0xBF4979305B43B0eB5Bb6a5C67ffB89408803d3e1'
+	account2Address,
+	account2Key,
+	'0xe269688F24e1C7487f649fC3dCD99A4Bf15bDaA1'
 );
