@@ -50,6 +50,6 @@ npm run build && node build/src/index.js
 
 For a more detailed overview of how this contract works and instructions on how to build it, please refer to the accompanying blog post.
 
-https://blog.vedantc.dev/build-an-zkapp-with-mina-protocol
+https://blog.vedantc.dev/build-a-zk-airdrop-app-with-mina-protocol
 
 ---
